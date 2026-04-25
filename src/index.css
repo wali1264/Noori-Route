@@ -16,6 +16,69 @@
     @apply bg-surface-bg text-brand-primary font-sans antialiased text-sm;
     direction: rtl;
   }
+
+  @media print {
+    /* Hide Navigation and UI Controls */
+    nav, 
+    aside,
+    header,
+    .print\:hidden,
+    button:not(.print-visible),
+    .bg-slate-900\/60,
+    .fixed,
+    .sticky {
+      display: none !important;
+    }
+
+    /* Reset Styles for Paper */
+    body {
+      background-color: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      color: black !important;
+    }
+
+    main {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+
+    .container, .max-w-7xl {
+      max-width: none !important;
+      width: 100% !important;
+    }
+
+    /* Force Table Legibility */
+    table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      border: 1px solid #000 !important;
+    }
+
+    th, td {
+      border: 1px solid #ccc !important;
+      padding: 8px 4px !important;
+      text-align: right !important;
+    }
+
+    th {
+      background-color: #f8fafc !important;
+      color: black !important;
+      font-weight: bold !important;
+    }
+
+    /* Component specific resets */
+    .bg-white { background: white !important; }
+    .shadow-sm, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+    .rounded-3xl, .rounded-2xl, .rounded-xl { border-radius: 0 !important; border: 1px solid #eee !important; }
+
+    /* Performance optimization for background printing */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+  }
 }
 
 /* Custom scrollbar for high density scrolling */
