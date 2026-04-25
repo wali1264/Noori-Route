@@ -13,6 +13,14 @@ export interface Customer {
   createdAt: number;
 }
 
+export interface Supplier {
+  id?: number;
+  name: string;
+  phone: string;
+  address: string;
+  createdAt: number;
+}
+
 export interface Purchase {
   id?: number;
   date: number;
@@ -20,7 +28,8 @@ export interface Purchase {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
-  supplier: string;
+  supplierId: number;
+  paidAmount: number;
 }
 
 export interface Sale {
@@ -28,7 +37,8 @@ export interface Sale {
   date: number;
   customerId: number;
   description: string;
-  amount: number;
+  totalAmount: number;
+  paidAmount: number;
   status: 'paid' | 'unpaid' | 'partial';
 }
 
@@ -40,10 +50,18 @@ export interface Receipt {
   note: string;
 }
 
+export interface VendorPayment {
+  id?: number;
+  date: number;
+  supplierId: number;
+  amount: number;
+  note: string;
+}
+
 export interface Expense {
   id?: number;
   date: number;
   category: string;
   amount: number;
-  note: string;
+  description: string;
 }

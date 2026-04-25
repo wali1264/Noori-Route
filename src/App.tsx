@@ -5,9 +5,12 @@ import Shell from './components/layout/Shell';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
 import Customers from './pages/Customers';
+import Suppliers from './pages/Suppliers';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
 import Receipts from './pages/Receipts';
+import Accounting from './pages/Accounting';
+import Expenses from './pages/Expenses';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 
@@ -61,9 +64,12 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/customers" element={<Customers />} />
+            <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/purchases" element={<Purchases />} />
             <Route path="/receipts" element={<Receipts />} />
+            <Route path="/accounting" element={<Accounting />} />
+            <Route path="/expenses" element={<Expenses />} />
             <Route path="/reports" element={<Reports />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" />} />

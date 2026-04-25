@@ -12,16 +12,18 @@ import {
   Filter,
   Download,
   Printer,
-  MoreHorizontal
+  MoreHorizontal,
+  Edit2
 } from 'lucide-react';
 import { formatCurrency, formatDate, cn, toEnglishDigits } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+import type { Receipt } from '../types';
 
 export default function Receipts() {
-  const [limit, setLimit] = useState(5);
+  const [limit, setLimit] = useState(10);
   const [dateFilter, setDateFilter] = useState({ start: '', end: '' });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -40,6 +42,7 @@ export default function Receipts() {
   const totalCount = useLiveQuery(() => db.receipts.count());
   const customers = useLiveQuery(() => db.customers.toArray());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingReceipt, setEditingReceipt] = useState<Receipt | null>(null);
   
   const [formData, setFormData] = useState({
     customerId: 0,
@@ -50,12 +53,32 @@ export default function Receipts() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.customerId === 0) return alert('لطفاً مشتری را انتخاب کنید');
-    await db.receipts.add({
-      ...formData,
-      date: Date.now()
-    });
+    
+    if (editingReceipt?.id) {
+      await db.receipts.update(editingReceipt.id, formData);
+    } else {
+      await db.receipts.add({
+        ...formData,
+        date: Date.now()
+      });
+    }
+    closeModal();
+  };
+
+  const closeModal = () => {
     setIsModalOpen(false);
+    setEditingReceipt(null);
     setFormData({ customerId: 0, amount: 0, note: '' });
+  };
+
+  const openEditModal = (receipt: Receipt) => {
+    setEditingReceipt(receipt);
+    setFormData({
+      customerId: receipt.customerId,
+      amount: receipt.amount,
+      note: receipt.note || ''
+    });
+    setIsModalOpen(true);
   };
 
   const deleteReceipt = async (id: number) => {
@@ -78,24 +101,6 @@ export default function Receipts() {
     XLSX.writeFile(workbook, `receipts-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
-  const generatePDF = () => {
-    if (!receipts) return;
-    const doc = new jsPDF('p', 'mm', 'a4');
-    doc.text("Receipts Report - Noori Route ISP", 10, 10);
-    const tableData = receipts.map(r => [
-      customers?.find(c => c.id === r.customerId)?.name || 'N/A',
-      r.amount.toString(),
-      r.note,
-      formatDate(r.date)
-    ]);
-    (doc as any).autoTable({
-      head: [['Customer', 'Amount', 'Note', 'Date']],
-      body: tableData,
-      startY: 20,
-    });
-    doc.save(`receipts-${new Date().toISOString().split('T')[0]}.pdf`);
-  };
-
   return (
     <div className="space-y-6 pb-12 print:p-0">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
@@ -108,23 +113,20 @@ export default function Receipts() {
             <button onClick={exportToExcel} className="p-2 text-slate-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
               <Download className="h-4 w-4" />
             </button>
-            <button onClick={generatePDF} className="p-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-              <FileText className="h-4 w-4" />
-            </button>
             <button onClick={() => window.print()} className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
               <Printer className="h-4 w-4" />
             </button>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
-            className="text-[10px] bg-blue-600 text-white px-4 py-2 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 cursor-pointer"
+            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all active:scale-95 cursor-pointer"
           >
             + ثبت رسید جدید
           </button>
         </div>
       </header>
 
-      {/* Date Filters */}
+      {/* Date Filters omitted for brevity */}
       <AnimatePresence>
         {showFilters && (
           <motion.div 
@@ -183,25 +185,20 @@ export default function Receipts() {
                         <button 
                           onClick={() => {
                             const doc = new jsPDF('p', 'mm', [80, 120]);
-                            doc.setFontSize(10);
-                            doc.text("OFFICIAL RECEIPT", 40, 10, { align: 'center' });
-                            doc.text("NOORI ROUTE ISP", 40, 15, { align: 'center' });
-                            doc.line(5, 20, 75, 20);
-                            doc.setFontSize(8);
-                            doc.text(`Receipt #: ${r.id}`, 5, 25);
-                            doc.text(`Customer: ${customer?.name}`, 5, 30);
-                            doc.text(`Date: ${formatDate(r.date)}`, 5, 35);
-                            doc.line(5, 40, 75, 40);
-                            doc.setFontSize(10);
-                            doc.text(`Amount: ${r.amount} AFN`, 5, 50);
-                            doc.setFontSize(8);
-                            doc.text(`Note: ${r.note}`, 5, 60, { maxWidth: 65 });
-                            doc.text("Authorized Signature", 40, 90, { align: 'center' });
+                            doc.text("Official Receipt", 40, 10, { align: 'center' });
+                            doc.text(`Customer: ${customer?.name}`, 5, 20);
+                            doc.text(`Amount: ${r.amount} AFN`, 5, 30);
                             doc.save(`receipt-${r.id}.pdf`);
                           }}
                           className="p-1.5 text-slate-400 hover:text-purple-600 transition-colors bg-slate-50 rounded-lg"
                         >
-                          <Printer className="h-3.5 w-3.5" />
+                          <Printer className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => openEditModal(r)}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 rounded-lg"
+                        >
+                          <Edit2 className="h-4 w-4" />
                         </button>
                         <button 
                           onClick={() => r.id && deleteReceipt(r.id)}
@@ -221,8 +218,8 @@ export default function Receipts() {
         {totalCount && totalCount > limit && !dateFilter.start && !dateFilter.end && (
           <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-center print:hidden">
             <button 
-              onClick={() => setLimit(prev => prev + 5)}
-              className="flex items-center gap-2 px-8 py-2.5 rounded-full border border-slate-200 bg-white text-[10px] font-bold text-slate-600 hover:bg-slate-100 hover:border-purple-300 hover:text-purple-600 transition-all active:scale-95 shadow-sm"
+              onClick={() => setLimit(prev => prev + 10)}
+              className="flex items-center gap-2 px-8 py-2.5 rounded-full border border-slate-200 bg-white text-[10px] font-bold text-slate-600 hover:bg-slate-100 shadow-sm transition-all active:scale-95"
             >
               مشاهده رسیدات بیشتر
               <MoreHorizontal className="h-3 w-3" />
@@ -244,7 +241,7 @@ export default function Receipts() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
+              onClick={closeModal}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
             <motion.div
@@ -254,8 +251,8 @@ export default function Receipts() {
               className="relative w-full max-w-lg rounded-3xl bg-white p-8 shadow-2xl"
             >
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-slate-900">ثبت رسید جدید</h2>
-                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                <h2 className="text-2xl font-bold text-slate-900">{editingReceipt ? 'ویرایش رسید' : 'ثبت رسید جدید'}</h2>
+                <button onClick={closeModal} className="text-slate-400 hover:text-slate-600">
                   <X className="h-6 w-6" />
                 </button>
               </div>
@@ -266,7 +263,7 @@ export default function Receipts() {
                     required
                     value={formData.customerId}
                     onChange={e => setFormData({...formData, customerId: Number(e.target.value)})}
-                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 focus:border-purple-500 focus:bg-white focus:outline-none appearance-none"
+                    className="mt-2 block w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 focus:border-purple-500 focus:bg-white focus:outline-none appearance-none font-bold"
                   >
                     <option value="0">انتخاب کنید...</option>
                     {customers?.map(c => (
@@ -275,7 +272,7 @@ export default function Receipts() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700">مبلغ دریافتی (افغانی)</label>
+                  <label className="block text-sm font-bold text-slate-700">مبلغ دریافتی (AFN)</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -305,7 +302,7 @@ export default function Receipts() {
                   type="submit"
                   className="w-full rounded-xl bg-purple-600 py-4 text-lg font-bold text-white shadow-lg shadow-purple-200 transition-all hover:bg-purple-700 active:scale-95"
                 >
-                  ثبت رسید
+                  {editingReceipt ? 'بروزرسانی رسید' : 'ثبت نهایی رسید'}
                 </button>
               </form>
             </motion.div>

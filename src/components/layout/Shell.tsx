@@ -11,7 +11,11 @@ import {
   Menu,
   X,
   User,
-  BarChart
+  BarChart,
+  Truck,
+  BookOpen,
+  DollarSign,
+  Calculator
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -24,9 +28,12 @@ interface ShellProps {
 const navItems = [
   { to: '/', icon: LayoutDashboard, label: 'داشبورد' },
   { to: '/customers', icon: Users, label: 'مشتریان' },
+  { to: '/suppliers', icon: Truck, label: 'تامین کنندگان' },
   { to: '/sales', icon: ShoppingBag, label: 'فروشات' },
   { to: '/purchases', icon: ShoppingCart, label: 'خریدات' },
   { to: '/receipts', icon: FileText, label: 'رسیدات' },
+  { to: '/expenses', icon: DollarSign, label: 'مصارف متفرقه' },
+  { to: '/accounting', icon: Calculator, label: 'حسابداری' },
   { to: '/reports', icon: BarChart, label: 'گزارشات' },
   { to: '/settings', icon: Settings, label: 'تنظیمات' },
 ];

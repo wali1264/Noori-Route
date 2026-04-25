@@ -41,7 +41,7 @@ export default function Dashboard() {
   const customersCount = useLiveQuery(() => db.customers.count());
   const customers = useLiveQuery(() => db.customers.toArray());
 
-  const totalSales = sales?.reduce((sum, s) => sum + s.amount, 0) || 0;
+  const totalSales = sales?.reduce((sum, s) => sum + s.totalAmount, 0) || 0;
   const totalPurchases = purchases?.reduce((sum, p) => sum + p.totalPrice, 0) || 0;
   const totalExpenses = expenses?.reduce((sum, e) => sum + e.amount, 0) || 0;
   const totalReceipts = receipts?.reduce((sum, r) => sum + r.amount, 0) || 0;
@@ -62,7 +62,7 @@ export default function Dashboard() {
       const j = jalaali.toJalaali(dObj);
       const daySales = sales
         .filter(s => new Date(s.date).toISOString().split('T')[0] === date)
-        .reduce((sum, s) => sum + s.amount, 0);
+        .reduce((sum, s) => sum + s.totalAmount, 0);
       return {
         name: `${j.jd} ${AFGHAN_MONTHS[j.jm - 1]}`,
         فروش: daySales
@@ -236,7 +236,11 @@ export default function Dashboard() {
                     "text-sm font-black",
                     activity.type === 'sale' || activity.type === 'receipt' ? "text-slate-900" : "text-red-600"
                   )}>
-                    {activity.type === 'purchase' ? '-' : '+'}{formatCurrency(activity.type === 'purchase' ? activity.totalPrice : activity.amount).replace('AFN', '')}
+                    {activity.type === 'purchase' ? '-' : '+'}{formatCurrency(
+                      activity.type === 'purchase' ? activity.totalPrice : 
+                      activity.type === 'sale' ? activity.totalAmount : 
+                      activity.amount
+                    ).replace('AFN', '')}
                   </div>
                   <div className="text-[9px] text-slate-400 font-bold uppercase">AFN</div>
                 </div>

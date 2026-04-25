@@ -1,22 +1,26 @@
 import Dexie, { type Table } from 'dexie';
-import type { Customer, Purchase, Sale, Receipt, Expense, Setting } from './types';
+import type { Customer, Purchase, Sale, Receipt, Expense, Setting, Supplier, VendorPayment } from './types';
 
 export class AppDatabase extends Dexie {
   settings!: Table<Setting>;
   customers!: Table<Customer>;
+  suppliers!: Table<Supplier>;
   purchases!: Table<Purchase>;
   sales!: Table<Sale>;
   receipts!: Table<Receipt>;
+  vendorPayments!: Table<VendorPayment>;
   expenses!: Table<Expense>;
 
   constructor() {
     super('NooriRouteDB');
-    this.version(1).stores({
+    this.version(2).stores({
       settings: '++id, key',
       customers: '++id, name, accountNumber',
-      purchases: '++id, date, item',
+      suppliers: '++id, name',
+      purchases: '++id, date, item, supplierId',
       sales: '++id, date, customerId',
       receipts: '++id, date, customerId',
+      vendorPayments: '++id, date, supplierId',
       expenses: '++id, date, category'
     });
   }
